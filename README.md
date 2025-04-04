@@ -1,26 +1,52 @@
-File Locker with DeepFace
+# File Locker with DeepFace
 
-This project is a Python-based GUI application that provides file locking and unlocking functionality using facial recognition. 
-It leverages the DeepFace library for facial recognition and PyQt5 for the user interface.
+## Overview
+This project implements a **file locking and unlocking system** using **DeepFace for face recognition**. It ensures that files can only be unlocked by an authorized user, providing an extra layer of security.
 
+## Features
+- **Face-based authentication** using DeepFace
+- **Lock and unlock files** with a simple UI
+- **Live camera feed** for capturing verification images
+- **Hidden file encryption** using Windows `attrib` command
 
-Features
+## Technologies Used
+- **Python** (PyQt5, OpenCV, DeepFace)
+- **Face Recognition** (DeepFace Library)
+- **GUI Development** (PyQt5)
+- **File Attribute Manipulation** (Windows `attrib` command)
 
-Facial Recognition: Uses DeepFace to lock and unlock files based on facial recognition.
+## Installation
+### Prerequisites
+Ensure you have Python 3.8+ installed and install the dependencies:
+```sh
+pip install PyQt5 opencv-python deepface
+```
 
-GUI Interface: Built with PyQt5 for a user-friendly graphical interface.
+## Usage
+1. **Run the application**:
+   ```sh
+   python complete.py
+   ```
+2. **Capture a reference image** by clicking "Capture Image".
+3. **Lock a file** by entering the file path and clicking "Lock File".
+4. **Unlock a file** by verifying your face and clicking "Unlock File".
 
-Camera Integration: Utilizes OpenCV to capture images from the webcam.
+## How It Works
+1. **File Locking**:
+   - User selects a file to lock.
+   - The file is hidden and marked as a system file (`attrib +h +s`).
+2. **File Unlocking**:
+   - The system captures a verification image.
+   - DeepFace compares the new image with the stored reference image.
+   - If verification is successful, the file is unhidden (`attrib -h -s`).
 
-Secure File Storage: Provides secure locking and unlocking of files using the user's facial features.
+## Future Enhancements
+- **Cross-platform support** (Linux & macOS file locking methods)
+- **Stronger encryption instead of simple attribute hiding**
+- **Multiple user authentication** for shared file access
 
+## License
+This project is licensed under the MIT License.
 
-Requirements To run this project, you need to have the following libraries installed:
-
-Python 3.x
-
-PyQt5
-
-OpenCV
-
-DeepFace
+## Contact
+For any issues or improvements, please raise a GitHub issue or contribute via pull requests!
