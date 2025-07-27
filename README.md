@@ -1,6 +1,6 @@
 # 🔒 FaceCrypt: Face-Based File Locker with AES Encryption
 
-Secure your sensitive files using your **face as the key**. This project uses facial recognition and AES-256 encryption to lock/unlock files with just a look.
+A secure file locking system using face recognition and AES encryption in a PyQt5 GUI. It hashes your face into a unique AES key to encrypt/decrypt files — without storing any passwords.
 
 <img src="https://img.shields.io/badge/python-3.10-blue?logo=python"/>
 <img src="https://img.shields.io/badge/GUI-PyQt5-green?logo=qt"/>
