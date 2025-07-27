@@ -2,6 +2,7 @@ import os
 import cv2
 import hashlib
 import face_recognition
+import numpy as np
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from PyQt5.QtWidgets import (
@@ -37,7 +38,7 @@ def decrypt_file(file_path, key):
         f.write(decrypted_data)
     os.remove(file_path)
 
-def capture_face_key():
+def capture_face_key(return_encoding=False):
     cam = cv2.VideoCapture(0)
     while True:
         ret, frame = cam.read()
@@ -53,6 +54,9 @@ def capture_face_key():
     encodings = face_recognition.face_encodings(rgb)
     if not encodings:
         raise Exception("No face detected.")
+    
+    if return_encoding:
+        return encodings[0]
     return derive_key_from_face_encoding(encodings[0])
 
 class FileLockerApp(QWidget):
@@ -90,12 +94,37 @@ class FileLockerApp(QWidget):
             if not os.path.exists(path):
                 QMessageBox.warning(self, "❌ Error", "File not found.")
                 return
+
             QMessageBox.information(self, "📸 Face Capture", "Press 's' to capture your face.")
-            key = capture_face_key()
+            cam = cv2.VideoCapture(0)
+            while True:
+                ret, frame = cam.read()
+                if not ret:
+                    break
+                cv2.imshow("Capture Face - Press 's' to Save", frame)
+                if cv2.waitKey(1) & 0xFF == ord('s'):
+                    break
+            cam.release()
+            cv2.destroyAllWindows()
+
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            encodings = face_recognition.face_encodings(rgb)
+            if not encodings:
+                raise Exception("No face detected.")
+
+            encoding = encodings[0]
+            key = derive_key_from_face_encoding(encoding)
             encrypt_file(path, key)
-            QMessageBox.information(self, "✅ Success", "File locked successfully.")
+
+        # Save face encoding to .face file
+            face_data_path = path + ".face"
+            with open(face_data_path, 'wb') as f:
+                f.write(encoding.tobytes())
+
+            QMessageBox.information(self, "✅ Success", "File locked and face data saved.")
         except Exception as e:
             QMessageBox.warning(self, "❌ Error", str(e))
+
 
     def unlock_file(self):
         try:
@@ -103,9 +132,44 @@ class FileLockerApp(QWidget):
             if not path.endswith(".locked") or not os.path.exists(path):
                 QMessageBox.warning(self, "❌ Error", "Locked file not found or wrong extension.")
                 return
+
+        # Load stored face encoding
+            face_data_path = path.replace(".locked", "") + ".face"
+            if not os.path.exists(face_data_path):
+                QMessageBox.warning(self, "❌ Error", "Stored face data not found.")
+                return
+
+            with open(face_data_path, 'rb') as f:
+                stored_encoding = f.read()
+            stored_encoding = np.frombuffer(stored_encoding, dtype=np.float64)
+
             QMessageBox.information(self, "📸 Face Capture", "Press 's' to verify your face.")
-            key = capture_face_key()
+            cam = cv2.VideoCapture(0)
+            while True:
+                ret, frame = cam.read()
+                if not ret:
+                    break
+                cv2.imshow("Verify Face - Press 's' to Proceed", frame)
+                if cv2.waitKey(1) & 0xFF == ord('s'):
+                    break
+            cam.release()
+            cv2.destroyAllWindows()
+
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            encodings = face_recognition.face_encodings(rgb)
+            if not encodings:
+                raise Exception("No face detected.")
+
+            current_encoding = encodings[0]
+            match = face_recognition.compare_faces([stored_encoding], current_encoding)[0]
+
+            if not match:
+                QMessageBox.warning(self, "❌ Error", "Face does not match. Access denied.")
+                return
+
+            key = derive_key_from_face_encoding(current_encoding)
             decrypt_file(path, key)
+            os.remove(face_data_path)  # Optional: remove face file after successful unlock
             QMessageBox.information(self, "✅ Success", "File unlocked successfully.")
         except Exception as e:
             QMessageBox.warning(self, "❌ Error", str(e))
